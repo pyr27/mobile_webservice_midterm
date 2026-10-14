@@ -6,13 +6,10 @@ from rest_framework.authtoken.views import obtain_auth_token
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('accounts/', include('django.contrib.auth.urls')),  # 추가: login/logout
     path('', include('blog.urls')),
     path('api-token-auth/', obtain_auth_token),
 ]
 
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-
-
-#curl 보내기
-#내가 프로그램 짜기

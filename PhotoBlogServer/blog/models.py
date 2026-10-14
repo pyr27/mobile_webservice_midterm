@@ -9,6 +9,9 @@ class Post(models.Model):
     published_date = models.DateTimeField(blank=True, null=True)
     image = models.ImageField(upload_to='images/%Y/%m/%d/', default='images/default_error.png')
 
+    class Meta:
+        ordering = ['-published_date']  # 최신 게시글이 먼저 오도록
+
     def publish(self):
         self.published_date = timezone.now()
         self.save()

@@ -3,16 +3,33 @@
 {% block content %}
 <div class="post">
     {% if post.published_date %}
-    <div class="date">
-        {{ post.published_date }}
-    </div>
+    <div class="date">{{ post.published_date }}</div>
     {% endif %}
+
     {% if user.is_authenticated %}
     <a class="btn btn-default" href="{% url 'post_edit' pk=post.pk %}">
-        <span class="glyphicon glyphicon-pencil"></span>
+        <span class="glyphicon glyphicon-pencil"></span> 수정
+    </a>
+    <a class="btn btn-danger" href="{% url 'post_delete' pk=post.pk %}">
+        <span class="glyphicon glyphicon-trash"></span> 삭제
     </a>
     {% endif %}
+
+    <button class="btn btn-default" onclick="copyLink()">
+        <span class="glyphicon glyphicon-share"></span> 링크 복사
+    </button>
+
     <h1>{{ post.title }}</h1>
+    <p>게시자: {{ post.author.username }}</p>
+    <img src="{{ post.image.url }}" class="rounded intruder-image-list" alt="{{ post.title }}">
     <p>{{ post.text|linebreaksbr }}</p>
 </div>
+
+<script>
+function copyLink() {
+    navigator.clipboard.writeText(window.location.href).then(function() {
+        alert("링크가 복사되었습니다!");
+    });
+}
+</script>
 {% endblock %}

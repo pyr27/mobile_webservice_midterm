@@ -14,6 +14,9 @@
         <a href="{% url 'post_new' %}" class="top-menu">
             <span class="glyphicon glyphicon-plus"></span>
         </a>
+        <a href="{% url 'logout' %}" class="top-menu" style="float:right;">로그아웃 ({{ user.username }})</a>
+        {% else %}
+        <a href="{% url 'login' %}" class="top-menu" style="float:right;">로그인</a>
         {% endif %}
         <h1><a href="/">Web Service project web-blog</a></h1>
     </div>
