@@ -51,3 +51,92 @@ class PostAPITestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('GET', response['Allow'])
         self.assertIn('POST', response['Allow'])
+
+
+class BlogWebTestCase(TestCase):
+
+    def setUp(self):
+        self.owner = User.objects.create_user(username="owner", password="pw12345!")
+        self.other = User.objects.create_user(username="other", password="pw12345!")
+        self.admin = User.objects.create_user(username="boss", password="pw12345!", is_staff=True)
+        now = timezone.now()
+        self.old = Post.objects.create(author=self.owner, title="옛날 글", text="사과",
+                                       published_date=now - timezone.timedelta(days=1))
+        self.new = Post.objects.create(author=self.other, title="최신 글", text="바나나",
+                                       published_date=now)
+
+    def test_home_lists_titles_newest_first_without_body(self):
+        res = self.client.get('/')
+        html = res.content.decode()
+        self.assertLess(html.index("최신 글"), html.index("옛날 글"))
+        self.assertNotIn("사과", html)
+
+    def test_home_shows_login_and_signup_when_logged_out(self):
+        res = self.client.get('/')
+        self.assertContains(res, '/accounts/login/')
+        self.assertContains(res, '/signup/')
+        self.assertNotContains(res, '/post/new/')
+
+    def test_home_shows_new_and_logout_when_logged_in(self):
+        self.client.login(username="owner", password="pw12345!")
+        res = self.client.get('/')
+        self.assertContains(res, '/post/new/')
+        self.assertContains(res, 'action="/accounts/logout/"')
+
+    def test_logout_via_post(self):
+        self.client.login(username="owner", password="pw12345!")
+        res = self.client.post('/accounts/logout/')
+        self.assertEqual(res.status_code, 302)
+
+    def test_login_page_renders(self):
+        res = self.client.get('/accounts/login/')
+        self.assertEqual(res.status_code, 200)
+        self.assertContains(res, "로그인")
+
+    def test_search(self):
+        res = self.client.get('/', {'q': '바나나'})
+        self.assertContains(res, "최신 글")
+        self.assertNotContains(res, "옛날 글")
+        res = self.client.get('/', {'q': 'owner'})
+        self.assertContains(res, "옛날 글")
+        self.assertNotContains(res, "최신 글")
+
+    def test_detail_buttons_only_for_owner_or_admin(self):
+        url = f'/post/{self.old.pk}/'
+        edit_url = f'/post/{self.old.pk}/edit/'
+        self.assertNotContains(self.client.get(url), edit_url)
+        self.client.login(username="other", password="pw12345!")
+        self.assertNotContains(self.client.get(url), edit_url)
+        self.client.login(username="owner", password="pw12345!")
+        self.assertContains(self.client.get(url), edit_url)
+        self.client.login(username="boss", password="pw12345!")
+        self.assertContains(self.client.get(url), edit_url)
+        self.assertContains(self.client.get(url), "링크 복사")
+
+    def test_non_owner_cannot_edit_or_delete(self):
+        self.client.login(username="other", password="pw12345!")
+        self.assertEqual(self.client.get(f'/post/{self.old.pk}/edit/').status_code, 403)
+        self.assertEqual(self.client.post(f'/post/{self.old.pk}/delete/').status_code, 403)
+        self.assertTrue(Post.objects.filter(pk=self.old.pk).exists())
+
+    def test_anonymous_redirected_to_login(self):
+        res = self.client.get('/post/new/')
+        self.assertRedirects(res, '/accounts/login/?next=/post/new/')
+
+    def test_admin_edit_keeps_original_author(self):
+        self.client.login(username="boss", password="pw12345!")
+        self.client.post(f'/post/{self.old.pk}/edit/', {'title': '수정됨', 'text': '본문'})
+        self.old.refresh_from_db()
+        self.assertEqual(self.old.title, '수정됨')
+        self.assertEqual(self.old.author, self.owner)
+
+    def test_signup_creates_inactive_user_pending_approval(self):
+        res = self.client.post('/signup/', {
+            'username': 'newbie', 'password1': 'Str0ng!pass', 'password2': 'Str0ng!pass',
+            'phone': '010-1234-5678',
+        }, follow=True)
+        self.assertContains(res, "관리자 승인")
+        user = User.objects.get(username='newbie')
+        self.assertFalse(user.is_active)
+        self.assertEqual(user.profile.phone, '010-1234-5678')
+        self.assertFalse(self.client.login(username='newbie', password='Str0ng!pass'))

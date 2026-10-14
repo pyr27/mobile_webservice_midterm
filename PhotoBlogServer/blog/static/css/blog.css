@@ -61,3 +61,72 @@ h1, h2, h3, h4 {
 .intruder-image-list {
     object-fit: cover;
 }
+
+.top-actions {
+    float: right;
+    margin-top: 10px;
+}
+
+.top-actions > * {
+    margin-left: 6px;
+    vertical-align: middle;
+}
+
+.top-user {
+    color: #ffffff;
+    font-weight: bold;
+}
+
+.inline-form {
+    display: inline-block;
+    margin: 0;
+}
+
+.search-form {
+    margin-bottom: 15px;
+}
+
+.search-summary {
+    color: #828282;
+}
+
+.post-table td a {
+    color: #333333;
+    font-weight: bold;
+}
+
+.post-table .col-author {
+    width: 20%;
+}
+
+.post-table .col-date {
+    width: 25%;
+    color: #828282;
+}
+
+.back-link {
+    display: inline-block;
+    margin-bottom: 10px;
+}
+
+.post-meta {
+    color: #828282;
+}
+
+.post-actions {
+    margin: 15px 0;
+}
+
+.post-image {
+    max-height: 500px;
+    margin-bottom: 20px;
+}
+
+.post-text {
+    font-size: 16px;
+    line-height: 1.7;
+}
+
+.signup-hint {
+    margin-top: 20px;
+}

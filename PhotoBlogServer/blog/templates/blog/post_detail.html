@@ -2,34 +2,65 @@
 
 {% block content %}
 <div class="post">
-    {% if post.published_date %}
-    <div class="date">{{ post.published_date }}</div>
-    {% endif %}
-
-    {% if user.is_authenticated %}
-    <a class="btn btn-default" href="{% url 'post_edit' pk=post.pk %}">
-        <span class="glyphicon glyphicon-pencil"></span> 수정
+    <a href="{% url 'post_list' %}" class="back-link">
+        <span class="glyphicon glyphicon-chevron-left"></span> 목록으로
     </a>
-    <a class="btn btn-danger" href="{% url 'post_delete' pk=post.pk %}">
-        <span class="glyphicon glyphicon-trash"></span> 삭제
-    </a>
-    {% endif %}
-
-    <button class="btn btn-default" onclick="copyLink()">
-        <span class="glyphicon glyphicon-share"></span> 링크 복사
-    </button>
 
     <h1>{{ post.title }}</h1>
-    <p>게시자: {{ post.author.username }}</p>
-    <img src="{{ post.image.url }}" class="rounded intruder-image-list" alt="{{ post.title }}">
-    <p>{{ post.text|linebreaksbr }}</p>
+    <p class="post-meta">
+        게시자: <strong>{{ post.author.username }}</strong>
+        {% if post.published_date %}
+        · <span class="date">{{ post.published_date|date:"Y-m-d H:i" }}</span>
+        {% endif %}
+    </p>
+
+    <div class="post-actions">
+        <button type="button" class="btn btn-default" id="share-btn">
+            <span class="glyphicon glyphicon-share"></span> 링크 복사
+        </button>
+        {% if can_manage %}
+        <a class="btn btn-default" href="{% url 'post_edit' pk=post.pk %}">
+            <span class="glyphicon glyphicon-pencil"></span> 수정
+        </a>
+        <a class="btn btn-danger" href="{% url 'post_delete' pk=post.pk %}">
+            <span class="glyphicon glyphicon-trash"></span> 삭제
+        </a>
+        {% endif %}
+        <span id="share-msg" class="text-success"></span>
+    </div>
+
+    {% if post.image %}
+    <img src="{{ post.image.url }}" class="img-responsive post-image" alt="{{ post.title }}">
+    {% endif %}
+    <p class="post-text">{{ post.text|linebreaksbr }}</p>
 </div>
 
 <script>
-function copyLink() {
-    navigator.clipboard.writeText(window.location.href).then(function() {
-        alert("링크가 복사되었습니다!");
-    });
-}
+document.getElementById('share-btn').addEventListener('click', function () {
+    var url = window.location.href;
+    var msg = document.getElementById('share-msg');
+    function done() { msg.textContent = '링크가 복사되었습니다!'; }
+
+    // navigator.clipboard 는 https/localhost 에서만 동작 → 그 외(예: 10.0.2.2)는 fallback
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(url).then(done, fallback);
+    } else {
+        fallback();
+    }
+
+    function fallback() {
+        var ta = document.createElement('textarea');
+        ta.value = url;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try {
+            document.execCommand('copy') ? done() : window.prompt('아래 링크를 복사하세요', url);
+        } finally {
+            document.body.removeChild(ta);
+        }
+    }
+});
 </script>
 {% endblock %}

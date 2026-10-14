@@ -18,3 +18,12 @@ class Post(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class Profile(models.Model):
+    # 회원가입 신청 시 입력한 전화번호 (관리자 승인 참고용)
+    user = models.OneToOneField('auth.User', on_delete=models.CASCADE)
+    phone = models.CharField(max_length=20)
+
+    def __str__(self):
+        return f"{self.user.username} ({self.phone})"
